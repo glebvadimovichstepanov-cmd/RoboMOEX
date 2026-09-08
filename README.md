@@ -63,6 +63,7 @@ uv run --frozen robomoex --mode backtest --download --symbol SBER --board TQBR -
 - [Правила данных и расчётов](docs/CORRECTNESS.md)
 - [Выполненная работа и проверки](docs/WORKLOG.md)
 - [Что осталось до продакшна](docs/ROADMAP.md)
+- [Новый explainable сигнальный движок](docs/SIGNAL_ENGINE.md)
 
 ## Границы релиза
 
