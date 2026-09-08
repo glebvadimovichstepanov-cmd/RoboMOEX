@@ -4,7 +4,14 @@ from urllib.parse import parse_qs, urlparse
 import pandas as pd
 import pytest
 
-from robomoex.cache import load_cache, save_cache
+from robomoex.cache import (
+    load_cache,
+    load_incremental_cache,
+    merge_bars,
+    save_cache,
+    save_incremental_cache,
+    save_timeframe_caches,
+)
 from robomoex.demo import dataset
 from robomoex.moex import download_minutes
 
@@ -22,6 +29,22 @@ def test_cache_roundtrip_and_corruption(tmp_path):
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="checksum"):
         load_cache(path, query)
+
+
+def test_incremental_cache_merge_and_derived_timeframes(tmp_path):
+    bars, sessions = dataset(1)
+    identity = {"symbol": "SBER", "board": "TQBR", "provider": "moex-iss-v1"}
+    path = tmp_path / "sber.1m.json"
+    save_incremental_cache(path, bars.iloc[:30], identity)
+    loaded, start, end = load_incremental_cache(path, identity)
+    assert len(loaded) == 30
+    assert start == bars.open_time.iloc[0]
+    assert end == bars.close_time.iloc[29]
+    merged = merge_bars(loaded, bars.iloc[30:])
+    assert len(merged) == len(bars)
+    derived = save_timeframe_caches(path, merged, sessions)
+    assert set(derived) == {"15m", "1h", "1d"}
+    assert all(target.exists() for target in derived.values())
 
 
 def block(minutes):
@@ -81,3 +104,4 @@ def test_invalid_symbol_never_reaches_transport():
         download_minutes(
             "../SBER", "2025-01-06T10:00:00Z", "2025-01-06T11:00:00Z", transport=forbidden
         )
+
