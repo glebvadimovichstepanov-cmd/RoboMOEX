@@ -84,3 +84,13 @@ python -I -m robomoex.cli --demo
 
 requirements.lock экспортируется: `uv export --frozen --no-dev --no-emit-project
 --format requirements-txt --output-file requirements.lock`.
+## Calendar update
+
+- Added `robomoex.calendar.download_stock_calendar`, backed by the official
+  MOEX ISS stock calendar (`is_traded`, holiday/weekend/transfer reasons).
+- `--download` now auto-builds the schedule when `--sessions` is omitted;
+  `--input` remains explicit and reproducible. Main session defaults to
+  09:50–18:50 Europe/Moscow and can be overridden with CLI flags.
+- Added mocked calendar contract tests. Network failures still fail closed;
+  no local holiday list is maintained.
+
