@@ -13,6 +13,7 @@ import pandas as pd
 
 from . import __version__
 from .cache import atomic_write, load_cache, save_cache
+from .calendar import download_stock_calendar
 from .config import load_config
 from .data import assert_fresh, closed_minutes, utc, validate_sessions
 from .demo import dataset
@@ -29,6 +30,12 @@ def parser() -> argparse.ArgumentParser:
     source.add_argument("--download", action="store_true", help="Read public MOEX ISS candles")
     source.add_argument("--demo", action="store_true", help="Synthetic deterministic replay")
     result.add_argument("--sessions", type=Path, help="Explicit session schedule CSV")
+    result.add_argument(
+        "--calendar-open", default="09:50:00", help="MOEX calendar session start (Moscow time)"
+    )
+    result.add_argument(
+        "--calendar-close", default="18:50:00", help="MOEX calendar session end (Moscow time)"
+    )
     result.add_argument("--symbol", default="SBER")
     result.add_argument("--board", default="TQBR")
     result.add_argument("--start", help="Timezone-aware start for download")
@@ -54,9 +61,11 @@ def run(args: argparse.Namespace) -> dict:
         cutoff = utc(bars.close_time.iloc[-1])
         source = "SYNTHETIC_DEMO"
     else:
-        if args.sessions is None:
-            raise ValueError("--sessions is required for external data")
-        schedule = validate_sessions(pd.read_csv(args.sessions))
+        if args.sessions is None and not args.download:
+            raise ValueError("--sessions is required for --input")
+        schedule = (
+            validate_sessions(pd.read_csv(args.sessions)) if args.sessions is not None else None
+        )
         cutoff = utc(args.as_of) if args.as_of else now
         if args.download:
             if not args.start:
@@ -70,14 +79,22 @@ def run(args: argparse.Namespace) -> dict:
             }
             if args.cache and args.mode == "paper":
                 raise ValueError("Historical cache cannot be used for current paper input")
-            if args.cache and args.cache.exists():
+            cache_hit = bool(args.cache and args.cache.exists())
+            if cache_hit:
                 bars = load_cache(args.cache, query)
             else:
                 bars = download_minutes(args.symbol, args.start, cutoff, board=args.board)
-                # Validation happens before persisting any downloaded dataset.
-                bars = closed_minutes(bars, schedule, cutoff)
-                if args.cache:
-                    save_cache(args.cache, bars, query)
+            if schedule is None:
+                schedule = download_stock_calendar(
+                    args.start,
+                    cutoff,
+                    open_at=args.calendar_open,
+                    close_at=args.calendar_close,
+                )
+            # Validation happens before persisting any downloaded dataset.
+            bars = closed_minutes(bars, schedule, cutoff)
+            if args.cache and not cache_hit:
+                save_cache(args.cache, bars, query)
             source = "MOEX_ISS"
         else:
             if args.start or args.cache:
@@ -137,3 +154,4 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
