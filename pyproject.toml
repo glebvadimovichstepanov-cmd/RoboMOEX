@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "robomoex"
+version = "0.1.0"
+description = "Causal MOEX research and paper trading engine"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+dependencies = ["numpy==2.3.5", "pandas==3.0.1", "tzdata==2025.3"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "pytest-cov==6.1.1", "ruff==0.11.13", "build==1.2.2.post1", "hatchling==1.27.0"]
+
+[project.scripts]
+robomoex = "robomoex.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/robomoex"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/configs", "/docs", "/README.md", "/LICENSE", "/pyproject.toml", "/uv.lock", "/requirements.lock", "/.python-version", "/.github"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".uv-cache", ".wheel-venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

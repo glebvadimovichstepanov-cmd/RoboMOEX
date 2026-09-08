@@ -1,0 +1,35 @@
+{
+  "verified_on": "2026-09-08",
+  "platform": "Windows",
+  "python": "3.12.14",
+  "source_repository": "glebvadimovichstepanov-cmd/test_backtrader_moexalgo",
+  "source_revision": "1726a3c93aed500e73517437e9fd5b6ac2ade899",
+  "pytest": {
+    "tests": 55,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "coverage_percent": 92.09,
+  "ruff_check": "passed",
+  "ruff_format": "passed",
+  "wheel_clean_environment_smoke": "passed",
+  "runtime_lock_sha256": "56332ed2192d2dad393baf60bdae4424c2ec8d1f383824464cf753ab40fa937c",
+  "uv_lock_sha256": "08b697bbe00bc9c88a2a8db96412ecfe51310e14adb29b0ecfea3526361ce224",
+  "moex_read_only_smoke": {
+    "symbol": "SBER",
+    "board": "TQBR",
+    "rows": 5,
+    "from": "2026-08-20T10:00:00+03:00",
+    "to": "2026-08-20T10:05:00+03:00"
+  },
+  "remote_ci": "not_run_pending_GitHub_repository_creation",
+  "broker_orders_sent": 0,
+  "live_enabled": false,
+  "limitations": [
+    "No actual Lag-Llama checkpoint integration",
+    "No profitability validation",
+    "No Linux execution yet",
+    "Paper mode is stateless replay"
+  ]
+}

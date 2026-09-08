@@ -1,0 +1,19 @@
+# Local simulation settings, not broker instrument specifications.
+[strategy]
+vol_1d_mult = 0.5
+vol_15_mult = 0.5
+vol_1m_mult = 1.0
+rsi_1d_thresh = 40.0
+rsi_15_thresh = 40.0
+rsi_1m_thresh = 35.0
+sl_atr_mult = 1.5
+tp_atr_mult = 1.5
+doji_thresh = 0.3
+
+[execution]
+initial_cash = 100000.0
+fee_rate = 0.001
+slippage_bps = 5.0
+lot_size = 10
+quantity_lots = 1
+tick_size = 0.01
