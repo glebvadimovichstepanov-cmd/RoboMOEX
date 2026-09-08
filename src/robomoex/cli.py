@@ -12,7 +12,13 @@ import numpy as np
 import pandas as pd
 
 from . import __version__
-from .cache import atomic_write, load_cache, save_cache
+from .cache import (
+    atomic_write,
+    load_incremental_cache,
+    merge_bars,
+    save_incremental_cache,
+    save_timeframe_caches,
+)
 from .calendar import download_stock_calendar
 from .config import load_config
 from .data import assert_fresh, closed_minutes, utc, validate_sessions
@@ -73,15 +79,27 @@ def run(args: argparse.Namespace) -> dict:
             query = {
                 "symbol": args.symbol,
                 "board": args.board,
-                "start": str(utc(args.start)),
-                "end": str(cutoff),
                 "provider": "moex-iss-v1",
             }
             if args.cache and args.mode == "paper":
                 raise ValueError("Historical cache cannot be used for current paper input")
             cache_hit = bool(args.cache and args.cache.exists())
-            if cache_hit:
-                bars = load_cache(args.cache, query)
+            if cache_hit and args.cache:
+                bars, cached_start, cached_end = load_incremental_cache(args.cache, query)
+                requested_start = utc(args.start)
+                chunks = [bars]
+                if requested_start < cached_start:
+                    chunks.insert(
+                        0,
+                        download_minutes(
+                            args.symbol, requested_start, cached_start, board=args.board
+                        ),
+                    )
+                if cutoff > cached_end:
+                    chunks.append(
+                        download_minutes(args.symbol, cached_end, cutoff, board=args.board)
+                    )
+                bars = merge_bars(*chunks)
             else:
                 bars = download_minutes(args.symbol, args.start, cutoff, board=args.board)
             if schedule is None:
@@ -93,8 +111,9 @@ def run(args: argparse.Namespace) -> dict:
                 )
             # Validation happens before persisting any downloaded dataset.
             bars = closed_minutes(bars, schedule, cutoff)
-            if args.cache and not cache_hit:
-                save_cache(args.cache, bars, query)
+            if args.cache:
+                save_incremental_cache(args.cache, bars, query)
+                save_timeframe_caches(args.cache, bars, schedule)
             source = "MOEX_ISS"
         else:
             if args.start or args.cache:
