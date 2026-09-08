@@ -70,7 +70,9 @@ def download_stock_calendar(
             continue
         opening = pd.Timestamp(datetime.combine(day, start_clock), tz="Europe/Moscow")
         closing = pd.Timestamp(datetime.combine(day, close_clock), tz="Europe/Moscow")
-        if closing <= first or opening >= last:
+        opening = max(opening, first.ceil("min"))
+        closing = min(closing, last.floor("min"))
+        if closing <= opening:
             continue
         rows.append(
             {"open_time": opening.tz_convert("UTC"), "close_time": closing.tz_convert("UTC")}
