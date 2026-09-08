@@ -94,3 +94,11 @@ requirements.lock экспортируется: `uv export --frozen --no-dev --n
 - Added mocked calendar contract tests. Network failures still fail closed;
   no local holiday list is maintained.
 
+## Incremental market-data cache
+
+- Added schema-2 ranged cache with stable identity (`symbol`, `board`, provider),
+  checksum and atomic writes.
+- Existing ranges are reused; only missing prefix/suffix minute ranges are
+  downloaded and merged with duplicate/conflict checks.
+- Derived `15m`, `1h` and `1d` cache files are regenerated from cached 1m data.
+
