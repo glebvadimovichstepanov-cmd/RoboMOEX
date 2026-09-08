@@ -52,3 +52,13 @@ def test_calendar_requires_expected_table():
             transport=lambda url: {},
         )
 
+
+def test_calendar_clips_partial_requested_range():
+    schedule = download_stock_calendar(
+        "2025-01-08T10:00:30+03:00",
+        "2025-01-08T10:05:30+03:00",
+        transport=lambda url: response([["2025-01-08", 1, "N"]]),
+    )
+    assert schedule.open_time.iloc[0] == pd.Timestamp("2025-01-08T07:01:00Z")
+    assert schedule.close_time.iloc[0] == pd.Timestamp("2025-01-08T07:05:00Z")
+
