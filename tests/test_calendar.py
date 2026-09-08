@@ -61,4 +61,3 @@ def test_calendar_clips_partial_requested_range():
     )
     assert schedule.open_time.iloc[0] == pd.Timestamp("2025-01-08T07:01:00Z")
     assert schedule.close_time.iloc[0] == pd.Timestamp("2025-01-08T07:05:00Z")
-

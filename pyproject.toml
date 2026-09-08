@@ -16,6 +16,9 @@ dev = ["pytest==8.3.5", "pytest-cov==6.1.1", "ruff==0.11.13", "build==1.2.2.post
 
 [project.scripts]
 robomoex = "robomoex.cli:main"
+robomoex-context = "robomoex.context:main"
+robomoex-research = "robomoex.research:main"
+robomoex-algopack = "robomoex.algopack_cache:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/robomoex"]

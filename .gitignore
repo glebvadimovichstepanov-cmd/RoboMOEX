@@ -18,3 +18,8 @@ results/
 *.ckpt
 *.pt
 *.safetensors
+
+.secrets/
+work/
+results/context_cache_v2/
+results/research_v2/

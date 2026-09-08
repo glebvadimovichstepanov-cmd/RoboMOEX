@@ -46,7 +46,20 @@ def test_high_event_or_bad_liquidity_blocks_entries():
     assert result["liquidity_ok"] is False
 
 
+def test_string_event_risk_is_context_safe():
+    daily = daily_fixture()
+    context = pd.DataFrame(
+        {
+            "date": pd.to_datetime(daily.close_time).dt.date,
+            "event_risk": ["LOW"] * len(daily),
+            "event_penalty": [1.0] * len(daily),
+        }
+    )
+    features = build_features(daily, context=context)
+    assert "event_risk" in features
+    assert "event_risk_ret5" not in features
+
+
 def test_position_size_uses_smaller_risk_constraint():
     risk = RiskLimits()
     assert position_size(100_000, 100, 2, 0.2, risk) <= 50_000 / 100
-

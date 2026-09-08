@@ -14,7 +14,7 @@ import pandas as pd
 from .data import utc, validate_sessions
 from .moex import get_json
 
-CALENDAR_URL = "https://apim.moex.com/iss/calendars/stock.json"
+CALENDAR_URL = "https://iss.moex.com/iss/calendars/stock.json"
 
 
 def _block_to_frame(response: dict, name: str = "off_days") -> pd.DataFrame:
@@ -80,4 +80,3 @@ def download_stock_calendar(
     if not rows:
         raise ValueError("MOEX calendar returned no trading sessions in range")
     return validate_sessions(pd.DataFrame(rows))
-

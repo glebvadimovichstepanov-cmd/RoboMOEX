@@ -90,7 +90,11 @@ def merge_bars(*frames: pd.DataFrame) -> pd.DataFrame:
     if data.open_time.duplicated().any():
         # Identical overlap is safe; conflicting OHLC is not.
         grouped = data.groupby("open_time", sort=False)
-        if grouped["close"].nunique().max() > 1:
+        if (
+            (grouped[["close_time", "open", "high", "low", "close", "volume"]].nunique() > 1)
+            .any()
+            .any()
+        ):
             raise ValueError("Conflicting bars in cache merge")
         data = data.drop_duplicates("open_time", keep="first")
     return validate_bars(data.sort_values("open_time", ignore_index=True))
@@ -108,4 +112,3 @@ def save_timeframe_caches(
         save_cache(target, derived, {"source": str(path.name), "timeframe": label})
         result[label] = target
     return result
-

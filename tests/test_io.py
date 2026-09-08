@@ -104,4 +104,3 @@ def test_invalid_symbol_never_reaches_transport():
         download_minutes(
             "../SBER", "2025-01-06T10:00:00Z", "2025-01-06T11:00:00Z", transport=forbidden
         )
-
