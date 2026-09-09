@@ -415,7 +415,11 @@ def main(argv=None):
             status="RESEARCH_ONLY",
             trading_ready=False,
             blockers=[
-                "unverified daily aggregation/session coverage",
+                (
+                    "native daily labels are not exact fill timestamps"
+                    if payload.get("query", {}).get("provider") == "MOEX ISS"
+                    else "unverified daily aggregation/session coverage"
+                ),
                 "daily spread proxy is not executable bid/ask at fill time",
                 "missing point-in-time corporate/news coverage",
                 "dividend cashflows not validated",
@@ -432,6 +436,13 @@ def main(argv=None):
             report["model_validation"] = evaluate(features)
         if args.diagnostics:
             report["diagnostics"] = diagnostics(features)
+        from .operations import Journal
+
+        with Journal(args.output / "operations") as journal_log:
+            journal_log.emit(
+                "research_completed", rows=len(features), windows=len(report["results"]["windows"])
+            )
+            journal_log.emit("trading_blocked", "WARNING", blockers=report["blockers"])
         journal = [make_signal(row, equity=100000) for _, row in features.iterrows()]
         atomic_write(
             args.output / "signals.jsonl",

@@ -37,4 +37,17 @@
 
 ## Официальная документация
 
+## Дополнение от 09.09.2026
+
+| Источник | Происхождение / частота | Задержка и стоимость | Риск / обновление |
+|---|---|---|---|
+| Нативные SNGS 1d | MOEX ISS candles interval=24, 2049 свечей с 2019 года | Только завершённые дни; существующая подписка | daily_iss: 7 дней перекрытия, пагинация, SHA256 кеша; метки свечей не точное время сделок |
+| WTI / Brent | FRED/EIA DCOILWTICO / DCOILBRENTEU, дневные | Публичный CSV, публикация с задержкой без фиксированного SLA | external_feeds: SQLite, 14 дней перекрытия, версии и observed_at; latest-vintage не PIT |
+| Общие новости / геополитика | GDELT DOC API, дневные окна поиска | Публичный endpoint, SLA не заявлен | Адаптер добавлен; фактически HTTP 429; лимит 250 обнаруживается, UNKNOWN сохраняется |
+
+По нефти загружено по 2000 дат наблюдений до 01.09.2026 включительно; пропуски
+сохранены, не заменяются ценой. Urals/дисконт по-прежнему отсутствует.
+Новый нефтяной архив не активирован в историческом скоринге без vintage-проверки.
+Полный статус и результаты: [отчёт 09.09.2026](COMPLETION_2026-09-09.md).
+
 [Каталог API](https://moexalgo.github.io/docs/api/), [модули](https://moexalgo.github.io/), [поля Super Candles](https://moexalgo.github.io/docs/description/supercandles/), [методология и единицы](https://moexalgo.github.io/docs/method/supercandles/), [FUTOI](https://moexalgo.github.io/docs/api/get-futoi-for-ticker/), [ISS+ STOMP](https://moexalgo.github.io/docs/websocket/websocket/).

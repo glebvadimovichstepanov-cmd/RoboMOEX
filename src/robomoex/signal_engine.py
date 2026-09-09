@@ -117,9 +117,53 @@ def build_features(
         c["date"] = pd.to_datetime(c["date"]).dt.date
         if c.date.duplicated().any():
             raise ValueError("Duplicate context dates")
-        # Daily market observations are conservatively usable the following Moscow day.
-        c["date"] = c.date + pd.Timedelta(days=1)
-        x = x.merge(c, on="date", how="left", suffixes=("", "_ctx"), validate="one_to_one")
+        # Returns are computed on each source's observations before alignment.
+        # Bounded as-of joins retain Friday data on Monday without indefinite ffill.
+        prices = [
+            name
+            for name in (
+                "imoex",
+                "oil",
+                "usd_rub",
+                "cny_rub",
+                "rgbI",
+                "rate",
+                "lkoh",
+                "rosn",
+                "tatn",
+                "bane",
+                "gazp",
+                "nvtk",
+            )
+            if name in c
+        ]
+        c = c.sort_values("date")
+        for name in prices:
+            source = c[["date", name]].dropna().copy()
+            for period in (1, 5, 20):
+                source[f"{name}_ret{period}"] = (
+                    source[name].diff(period)
+                    if name == "rate"
+                    else source[name].pct_change(period, fill_method=None)
+                )
+            source = c[["date"]].merge(source, on="date", how="left", validate="one_to_one")
+            source["available_at"] = (
+                pd.to_datetime(source.date).dt.tz_localize("Europe/Moscow") + pd.Timedelta(days=1)
+            ).dt.tz_convert("UTC")
+            x = pd.merge_asof(
+                x.sort_values("close_time"),
+                source.drop(columns="date"),
+                left_on="close_time",
+                right_on="available_at",
+                direction="backward",
+                tolerance=pd.Timedelta(days=4),
+            ).drop(columns="available_at")
+        # Risk classifications are never carried over to another observation date.
+        risk_context = c.drop(columns=prices)
+        risk_context["date"] = risk_context.date + pd.Timedelta(days=1)
+        x = x.merge(
+            risk_context, on="date", how="left", suffixes=("", "_ctx"), validate="one_to_one"
+        )
         for name in (
             "imoex",
             "oil",
@@ -131,7 +175,7 @@ def build_features(
             "event_penalty",
             "event_risk",
         ):
-            if name in x:
+            if name in x and f"{name}_ret5" not in x:
                 if name == "event_risk":
                     continue
                 x[f"{name}_ret5"] = (
@@ -141,28 +185,17 @@ def build_features(
                 )
         if "imoex" in x:
             x["relative_imoex20"] = (
-                close.pct_change(20, fill_method=None) - x.imoex.pct_change(20, fill_method=None)
+                close.pct_change(20, fill_method=None) - x.imoex_ret20
             ).replace([np.inf, -np.inf], np.nan)
         if "oil" in x:
-            x["oil_corr60"] = ret.rolling(60, min_periods=30).corr(
-                x.oil.pct_change(fill_method=None)
-            )
-            x["oil_corr120"] = ret.rolling(120, min_periods=60).corr(
-                x.oil.pct_change(fill_method=None)
-            )
+            x["oil_corr60"] = ret.rolling(60, min_periods=30).corr(x.oil_ret1)
+            x["oil_corr120"] = ret.rolling(120, min_periods=60).corr(x.oil_ret1)
         if "usd_rub" in x:
-            x["fx_corr60"] = ret.rolling(60, min_periods=30).corr(
-                x.usd_rub.pct_change(fill_method=None)
-            )
-            x["fx_corr120"] = ret.rolling(120, min_periods=60).corr(
-                x.usd_rub.pct_change(fill_method=None)
-            )
-        for name in ("cny_rub", "rgbI"):
-            if name in x:
-                x[f"{name}_ret20"] = x[name].pct_change(20, fill_method=None)
+            x["fx_corr60"] = ret.rolling(60, min_periods=30).corr(x.usd_rub_ret1)
+            x["fx_corr120"] = ret.rolling(120, min_periods=60).corr(x.usd_rub_ret1)
         peers = [p for p in ("lkoh", "rosn", "tatn", "bane", "gazp", "nvtk") if p in x]
         if peers:
-            peer_returns = x[peers].pct_change(20, fill_method=None)
+            peer_returns = x[[f"{name}_ret20" for name in peers]]
             median = peer_returns.median(axis=1).where(peer_returns.notna().sum(axis=1) >= 4)
             x["relative_peers20"] = close.pct_change(20, fill_method=None) - median
     return x
